@@ -10,13 +10,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Include Boost headers from the third_party directory
-set(THIRD_PARTY_DIR ${CMAKE_SOURCE_DIR}/third_party)
-include_directories(${THIRD_PARTY_DIR}/boost)
+# Define source directories
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/tests)
 
-# Subdirectories
-add_subdirectory(src)
-#add_subdirectory(tests)
+# Include source directory
+include_directories(${SRC_DIR})
 
-# Enable testing
+# Add source files
+file(GLOB SRC_FILES ${SRC_DIR}/*.cpp)
+
+# Add the main executable
+add_executable(interactive_main ${SRC_FILES})
+
+# Add dependencies
+target_link_libraries(interactive_main pthread)
+
+# Add tests
 enable_testing()
+add_subdirectory(tests)
