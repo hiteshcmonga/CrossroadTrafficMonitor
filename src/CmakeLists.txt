@@ -1,0 +1,8 @@
+# Add source files here when you have them
+add_library(CrossroadTrafficMonitoring STATIC
+    CrossroadTrafficMonitoring.cpp
+    CrossroadTrafficMonitoring.hpp
+)
+
+# Link dependencies (if any)
+target_include_directories(CrossroadTrafficMonitoring PUBLIC ${CMAKE_SOURCE_DIR}/third_party/boost)

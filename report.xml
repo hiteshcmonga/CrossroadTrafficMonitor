@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="9" failures="0" disabled="0" errors="0" time="5.5" timestamp="2025-01-28T00:11:14.392" name="AllTests">
+  <testsuite name="CrossroadTrafficMonitoringTest" tests="9" failures="0" disabled="0" skipped="0" errors="0" time="5.464" timestamp="2025-01-28T00:11:14.412">
+    <testcase name="InitialStateIsInit" file="tests/test_CrossroadTrafficMonitoring.cpp" line="17" status="run" result="completed" time="0." timestamp="2025-01-28T00:11:14.421" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="StartTransitionsInitToActive" file="tests/test_CrossroadTrafficMonitoring.cpp" line="25" status="run" result="completed" time="0." timestamp="2025-01-28T00:11:14.438" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="StopTransitionsActiveToStopped" file="tests/test_CrossroadTrafficMonitoring.cpp" line="38" status="run" result="completed" time="2.504" timestamp="2025-01-28T00:11:14.459" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="ResetClearsStatsAndForcesActive" file="tests/test_CrossroadTrafficMonitoring.cpp" line="56" status="run" result="completed" time="0." timestamp="2025-01-28T00:11:17.003" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="EmptySignalCausesErrorStateFromActive" file="tests/test_CrossroadTrafficMonitoring.cpp" line="73" status="run" result="completed" time="1.488" timestamp="2025-01-28T00:11:17.023" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="SignalsInInitOrStoppedAreIgnored" file="tests/test_CrossroadTrafficMonitoring.cpp" line="103" status="run" result="completed" time="0." timestamp="2025-01-28T00:11:18.537" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="VehicleCountingWorks" file="tests/test_CrossroadTrafficMonitoring.cpp" line="119" status="run" result="completed" time="0." timestamp="2025-01-28T00:11:18.554" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="TestPeriodicResetManualCheck" file="tests/test_CrossroadTrafficMonitoring.cpp" line="152" status="run" result="completed" time="1.188" timestamp="2025-01-28T00:11:18.571" classname="CrossroadTrafficMonitoringTest" />
+    <testcase name="TestMaxVehiclesCapacity" file="tests/test_CrossroadTrafficMonitoring.cpp" line="166" status="run" result="completed" time="0.064" timestamp="2025-01-28T00:11:19.801" classname="CrossroadTrafficMonitoringTest" />
+  </testsuite>
+</testsuites>

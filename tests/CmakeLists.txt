@@ -1,0 +1,8 @@
+# Add test executables here
+add_executable(TrafficMonitoringTests
+    TrafficMonitoringTests.cpp
+)
+
+# Link the main library and Boost headers
+target_link_libraries(TrafficMonitoringTests PRIVATE CrossroadTrafficMonitoring)
+target_include_directories(TrafficMonitoringTests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/boost)
