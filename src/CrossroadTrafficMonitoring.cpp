@@ -29,13 +29,13 @@ void CrossroadTrafficMonitoring::InitializeFreeList()
         vehiclePool[i].category_hook.unlink();
         vehiclePool[i].alphabetical_hook.unlink();
         // link i-th to (i+1)-th
-        reinterpret_cast<Vehicle*&>(vehiclePool[i].count) = &vehiclePool[i+1];
+        vehiclePool[i].nextFree = &vehiclePool[i + 1];
         // 'count' field is also used as a next pointer storage to avoid extra space usage.
     }
     // Mark the tail
     vehiclePool[MAX_VEHICLES - 1].category_hook.unlink();
     vehiclePool[MAX_VEHICLES - 1].alphabetical_hook.unlink();
-    reinterpret_cast<Vehicle*&>(vehiclePool[MAX_VEHICLES - 1].count) = nullptr;
+    vehiclePool[MAX_VEHICLES - 1].nextFree = nullptr;
 }
 
 // AllocateVehicle: pop from free list
@@ -47,7 +47,7 @@ Vehicle* CrossroadTrafficMonitoring::AllocateVehicle()
     }
     Vehicle* v = freeListHead;
     // Move head
-    freeListHead = reinterpret_cast<Vehicle*>(freeListHead->count);
+    freeListHead = v->nextFree;
     // Clear out the data
     v->reset();
     return v;
@@ -63,7 +63,7 @@ void CrossroadTrafficMonitoring::FreeVehicle(Vehicle* v)
         v->alphabetical_hook.unlink();
 
     // push front to free list
-    reinterpret_cast<Vehicle*&>(v->count) = freeListHead;
+    v->nextFree = freeListHead;
     freeListHead = v;
 }
 

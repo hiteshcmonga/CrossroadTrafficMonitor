@@ -69,6 +69,8 @@ public:
     std::string     id;
     unsigned        count{0};
 
+    Vehicle* nextFree{nullptr}; // for free list
+
     // Intrusive hooks: one for category list, one for alphabetical list.
     // We use list_member_hook to store the hooks inside the object.
     typedef boost::intrusive::list_member_hook<
@@ -84,6 +86,7 @@ public:
         category   = VehicleCategory::Bicycle;
         id.clear();
         count      = 0;
+        nextFree   = nullptr;
     }
 };
 
