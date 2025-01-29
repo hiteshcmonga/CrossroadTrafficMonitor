@@ -222,6 +222,7 @@ void CrossroadTrafficMonitoring::OnSignal()
     // If in Active => switch to Error state
     if (state == State::Active)
     {
+        ++errorCount; // increment for first error signal
         state = State::Error;
         return;
     }
@@ -229,7 +230,7 @@ void CrossroadTrafficMonitoring::OnSignal()
     // If in Error => increment error count and log
     if (state == State::Error)
     {
-        errorCount++;
+        ++errorCount;
         std::cerr << "[CameraError]: Received empty signal while in Error state\n";
     }
 }
@@ -255,7 +256,7 @@ void CrossroadTrafficMonitoring_OnSignal_Helper(CrossroadTrafficMonitoring* self
     // if in Error => increment errorCount, log, do not count the vehicle
     if (self->GetCurrentState() == State::Error)
     {
-        (self->errorCount)++;
+        ++(self->errorCount);
         std::cerr << "[CameraError] Vehicle signal received in Error state. Not counted.\n";
         return;
     }
