@@ -47,9 +47,6 @@ Aim to create a system that:
 
 ## Project Structure
 
-
-## 📂 Project Structure
-
 | **Directory/File**                                | **Description**                                 |
 |--------------------------------------------------|-------------------------------------------------|
 | `CrossroadTrafficMonitoring/`                    | Project root directory                          |
@@ -138,6 +135,8 @@ Google tes is used. Test cases include tests for:
 3. Coverage Reporting (Not stable)
 
 ## Demo and screenshots
+A quick demo of the application running on Docker:
+![Demo Gif](screenshots/CrossroadTrafficMonitoring.gif)
 
 ## Challenges and solutions
 
