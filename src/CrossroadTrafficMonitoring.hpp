@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstddef>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -72,7 +73,7 @@ public:
     Vehicle* nextFree{nullptr}; // for free list
 
     // Intrusive hooks: one for category list, one for alphabetical list.
-    // We use list_member_hook to store the hooks inside the object.
+    // Use list_member_hook to store the hooks inside the object.
     typedef boost::intrusive::list_member_hook<
         boost::intrusive::link_mode<boost::intrusive::auto_unlink>
     > Hook;
@@ -148,6 +149,9 @@ private:
     static constexpr size_t MAX_VEHICLES = 1000;
     Vehicle vehiclePool[MAX_VEHICLES];
     Vehicle* freeListHead{nullptr};
+
+    // Protect shared data
+    mutable std::mutex monitorMutex;
 
     // Helpers to free list
     void InitializeFreeList();

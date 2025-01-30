@@ -27,6 +27,7 @@ int main()
 
     do
     {
+        monitor.CheckAndHandlePeriodicReset();  
         displayMenu();
         std::cin >> choice;
 
@@ -145,6 +146,7 @@ int main()
                 std::cout << "[Warning] Reset failed to transition to Active. Current state: "
                           << static_cast<int>(newState) << "\n";
             }
+            break;
         }
 
         case 4:

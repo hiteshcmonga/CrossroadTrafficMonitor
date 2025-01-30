@@ -144,6 +144,7 @@ void CrossroadTrafficMonitoring::CheckAndHandlePeriodicReset()
     const auto now = std::chrono::steady_clock::now();
     if (now >= nextResetTime)
     {
+        std::cout << "Periodic reset triggered!\n";
         // Perform reset and become Active
         Reset(); 
     }
@@ -153,6 +154,7 @@ void CrossroadTrafficMonitoring::CheckAndHandlePeriodicReset()
 void CrossroadTrafficMonitoring::Start()
 {
     // Start() transitions from Init -> Active
+    std::lock_guard<std::mutex> lock(monitorMutex);
     if (state == State::Init)
     {
         state = State::Active;
@@ -163,6 +165,7 @@ void CrossroadTrafficMonitoring::Start()
 
 void CrossroadTrafficMonitoring::Stop()
 {
+    std::lock_guard<std::mutex> lock(monitorMutex);
     // Stop(): Active -> Stopped
     if (state == State::Active)
     {
@@ -205,6 +208,7 @@ void CrossroadTrafficMonitoring::Reset()
 // OnSignal(ResetSignal)
 void CrossroadTrafficMonitoring::OnSignal(ResetSignal)
 {
+    std::lock_guard<std::mutex> lock(monitorMutex);
     Reset();
 }
 
@@ -212,6 +216,7 @@ void CrossroadTrafficMonitoring::OnSignal(ResetSignal)
 void CrossroadTrafficMonitoring::OnSignal()
 {
     // check for periodic reset first
+    std::lock_guard<std::mutex> lock(monitorMutex);
     CheckAndHandlePeriodicReset();
     // If in Init or Stopped => ignore
     if (state == State::Init || state == State::Stopped)
@@ -247,6 +252,8 @@ void CrossroadTrafficMonitoring_OnSignal_Helper(CrossroadTrafficMonitoring* self
                                                 const T& vehicle)
 {
     self->CheckAndHandlePeriodicReset();
+
+    std::lock_guard<std::mutex> lock(self->monitorMutex);
 
     if (self->GetCurrentState() == State::Init || self->GetCurrentState() == State::Stopped)
     {
@@ -301,14 +308,16 @@ void CrossroadTrafficMonitoring::OnSignal(const Scooter &s)
     CrossroadTrafficMonitoring_OnSignal_Helper(this, s);
 }
 
+// Getters
 unsigned CrossroadTrafficMonitoring::GetErrorCount() const
 {
+    std::lock_guard<std::mutex> lock(monitorMutex);
     return errorCount;
 }
 
-// GetStatistics(VehicleCategory)
 std::vector<std::string> CrossroadTrafficMonitoring::GetStatistics(VehicleCategory cat) const
 {
+    std::lock_guard<std::mutex> lock(monitorMutex);
     std::vector<std::string> result;
     switch (cat)
     {
@@ -343,6 +352,7 @@ std::vector<std::string> CrossroadTrafficMonitoring::GetStatistics(VehicleCatego
 // GetStatistics() => alphabetical
 std::vector<std::string> CrossroadTrafficMonitoring::GetStatistics() const
 {
+    std::lock_guard<std::mutex> lock(monitorMutex);
     std::vector<std::string> result;
     for (auto &x : alphabeticalList)
     {
