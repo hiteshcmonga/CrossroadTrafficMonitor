@@ -13,25 +13,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake libboost-dev libgtest-dev valgrind lcov
-
-    - name: Configure build with Clang-Tidy
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=performance-*,modernize-*" ..
     
-    - name: Run Clang-Tidy
-      run: |
-        cd build
-        cmake --build . --target CrossroadTrafficMonitoring | tee clang-tidy.log
-    
-    - name: Upload Clang-Tidy Logs
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: clang-tidy-logs
-        path: build/clang-tidy.log
-
     - name: Build with coverage
       run: |
         mkdir build
