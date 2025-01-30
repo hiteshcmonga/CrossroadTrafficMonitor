@@ -37,6 +37,7 @@ Aim to create a system that:
   - State recovery via Reset
 - **Tests**: Google Test suite verifying state transitions, counting, error handling, and capacity edge cases.
 - **Docker support**: Containerizes the environment to build, test, and run the interactive main.
+- **CI/CD pipeline workflow**: compiles the application and checks in an integrated environment (open github actions from the status bar for detailed view)
 
 ## Design and Architecture
 
@@ -45,23 +46,30 @@ Aim to create a system that:
 ### Memory management
 
 ## Project Structure
-CrossroadTrafficMonitoring/
-├── src/
-│   ├── CMakeLists.txt                      # Build configuration for main application
-│   ├── CrossroadTrafficMonitoring.cpp      # Main logic
-│   ├── CrossroadTrafficMonitoring.hpp      # Main logic header
-│   └── interactive_main.cpp                # Demo CLI interface, enter auto-reset period here. 
-|                                           # (currently 10 minutes auto reset)
-├── tests/
-│   ├── CMakeLists.txt                      # Test suite configuration
-│   ├── test_CrossroadTrafficMonitoring.cpp # Unit tests
-│   └── test_main.cpp                       # GoogleTest entry point
-├── CMakeLists.txt                          # Root build configuration
-├── Dockerfile                              # Containerization setup
-├── .github/
-│   └── workflows/
-│       └── ci.yaml                         # CI/CD pipeline definition
-└──  README.md                               # Project documentation
+
+
+## 📂 Project Structure
+
+| **Directory/File**                                | **Description**                                 |
+|--------------------------------------------------|-------------------------------------------------|
+| `CrossroadTrafficMonitoring/`                    | Project root directory                          |
+| ├── `src/`                                       | Source code directory                           |
+| │   ├── `CMakeLists.txt`                         | Build configuration for main application        |
+| │   ├── `CrossroadTrafficMonitoring.cpp`         | Main logic                                      |
+| │   ├── `CrossroadTrafficMonitoring.hpp`         | Main logic header                               |
+| │   └── `interactive_main.cpp`                   | Demo CLI interface, enter auto-reset period here.  |
+| │                                               | (currently 10 minutes auto reset)              |
+| ├── `tests/`                                     | Unit and integration tests                      |
+| │   ├── `CMakeLists.txt`                         | Test suite configuration                        |
+| │   ├── `test_CrossroadTrafficMonitoring.cpp`    | Unit tests                                      |
+| │   └── `test_main.cpp`                          | GoogleTest entry point                          |
+| ├── `CMakeLists.txt`                             | Root build configuration                        |
+| ├── `Dockerfile`                                 | Containerization setup                          |
+| ├── `.github/`                                   | GitHub workflows directory                      |
+| │   └── `workflows/`                             | Contains CI/CD pipeline configuration          |
+| │       └── `ci.yaml`                            | CI/CD pipeline definition                       |
+| └── `README.md`                                  | Project documentation                           |
+
 
 ## Build Instructions
 This project is developed using MSYS2 (MinGW) and C++20, but it can also be built using any modern g++ compiler with Boost Intrusive Lists.
@@ -129,6 +137,8 @@ Google tes is used. Test cases include tests for:
 2. Memory Checks: Valgrind for leak detection and memory fragmentation check (using massif)
 3. Coverage Reporting (Not stable)
 
+## Demo and screenshots
+
 ## Challenges and solutions
 
 In developing the Crossroad Traffic Monitoring System, several challenges arose. Below are some of the key challenges faced during the implementation and how they were resolved:
@@ -137,7 +147,7 @@ While running a test executable, a segmentation fault occurred, indicating an is
 ![Segmentation fault screenshot](screenshots/seg_bug.png)
 The root cause was accessing a dangling pointer after an element was removed from the intrusive list.
 gdb was helpful in finding out the issue and resolving it: 
-![Segmentation fault fix](screenshots/seg_fix.jpg)
+![Segmentation fault fix](screenshots/seg_fix.png)
 
 2. Free List Mismanagement
 Another issue was that concurrent FreeVehicle() and AllocateVehicle() calls corrupted the free list’s linked structure. Issue identified was that without explicitly terminating the last node with `nullptr`, the free list became corrupted and was resolved with:
