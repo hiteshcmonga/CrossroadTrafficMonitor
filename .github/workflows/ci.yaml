@@ -1,0 +1,60 @@
+name: CI/CD test
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake libboost-dev libgtest-dev valgrind lcov
+
+    - name: Build with coverage
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
+        make
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Generate coverage report
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/tests/*' --output-file coverage.info
+        lcov --list coverage.info
+
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./build/coverage.info
+        flags: unittests
+
+    - name: Valgrind memory check
+      run: |
+        cd build
+        valgrind --leak-check=full --error-exitcode=1 ./your_test_executable
+        
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install benchmark tools
+      run: sudo apt-get install -y google-benchmark
+
+    - name: Run benchmarks
+      run: |
+        cd build
+        ./your_benchmark_executable --benchmark_format=console

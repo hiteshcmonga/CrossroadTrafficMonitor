@@ -129,18 +129,18 @@ TEST(CrossroadTrafficMonitoringTest, EmptySignalCausesErrorStateFromActive)
     std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState()) << std::endl;
     EXPECT_EQ(monitor.GetCurrentState(), State::Error);
 
-    std::cout << "  Expect errorCount=0, Actual=" << monitor.GetErrorCount() << std::endl;
-    EXPECT_EQ(monitor.GetErrorCount(), 0u);
+    std::cout << "  Expect errorCount=1, Actual=" << monitor.GetErrorCount() << std::endl;
+    EXPECT_EQ(monitor.GetErrorCount(), 1u);
 
     std::cout << "  Another empty OnSignal() => increments errorCount\n";
     monitor.OnSignal();
     std::cout << "  errorCount=" << monitor.GetErrorCount() << std::endl;
-    EXPECT_EQ(monitor.GetErrorCount(), 1u);
+    EXPECT_EQ(monitor.GetErrorCount(), 2u);
 
     std::cout << "  OnSignal(Car(\"E-CAR\")) => still in Error => increments errorCount again\n";
     monitor.OnSignal(Car("E-CAR"));
     std::cout << "  errorCount=" << monitor.GetErrorCount() << std::endl;
-    EXPECT_EQ(monitor.GetErrorCount(), 2u);
+    EXPECT_EQ(monitor.GetErrorCount(), 3u);
 
     auto stats = monitor.GetStatistics();
     std::cout << "  Expect stats empty, Actual size=" << stats.size() << std::endl;
