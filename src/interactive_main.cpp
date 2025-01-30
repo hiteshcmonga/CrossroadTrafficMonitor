@@ -1,9 +1,9 @@
 #include "CrossroadTrafficMonitoring.hpp"
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <thread>
-
 
 using namespace ctm;
 
@@ -19,6 +19,19 @@ void displayMenu() {
   std::cout << "0. Exit\n";
   std::cout << "Select an option: ";
 }
+// Helper function for robust input
+template<typename T>
+T getValidInput(const std::string& prompt) {
+  T value;
+  while(true) {
+    std::cout << prompt;
+    if(std::cin >> value) break;
+    std::cout << "Invalid input! Please try again.\n";
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+  return value;
+}
 
 int main() {
   CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(
@@ -28,20 +41,12 @@ int main() {
   do {
     monitor.CheckAndHandlePeriodicReset();
     displayMenu();
-    std::cin >> choice;
-
-    // If user enters non-integer
-    if (!std::cin) {
-      std::cin.clear();
-      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Invalid input. Please try again.\n";
-      continue;
-    }
+    choice = getValidInput<int>("");
 
     // oldState/newState pattern for Start/Stop/Reset
     State oldState = monitor.GetCurrentState();
 
-    switch (choice) {
+    switch(choice) {
     case 1: {
       // Attempt to start monitoring
       monitor.Start();
@@ -119,11 +124,13 @@ int main() {
 
     case 4: {
       // Signal a vehicle
-      std::string type, id;
-      std::cout << "Enter Vehicle Type (Bicycle/Car/Scooter): ";
-      std::cin >> type;
-      std::cout << "Enter Vehicle ID: ";
-      std::cin >> id;
+      std::string type;
+      while(true) {
+        type = getValidInput<std::string>("Enter Vehicle Type (Bicycle/Car/Scooter): ");
+        if(type == "Bicycle" || type == "Car" || type == "Scooter") break;
+        std::cout << "Invalid vehicle type! Try again.\n";
+      }
+      std::string id = getValidInput<std::string>("Enter Vehicle ID: ");
 
       State beforeSignal = monitor.GetCurrentState();
       if (type == "Bicycle") {
