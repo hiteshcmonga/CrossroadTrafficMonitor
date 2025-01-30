@@ -13,15 +13,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Enable testing framework
 enable_testing()
 
-# Enable coverage if requested
-option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+# Enable Code Coverage
+option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 
 if(ENABLE_COVERAGE)
-    message(STATUS "Code coverage enabled")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g --coverage -fprofile-arcs -ftest-coverage")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g --coverage -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
+
 
 # Debugging output
 message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
