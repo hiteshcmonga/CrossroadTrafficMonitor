@@ -4,273 +4,357 @@
 #include <iostream>
 #include <thread>
 
-
 using namespace ctm;
 
-// A helper to simulate time passage by calling CheckAndHandlePeriodicReset()
+// Helper function to simulate time passage
 static void simulateTimePassing(CrossroadTrafficMonitoring &monitor,
                                 std::chrono::milliseconds ms) {
-  // Simulate time passing by manipulating nextResetTime or using
-  // std::this_thread::sleep_for to trigger a reset for testing.
-  std::this_thread::sleep_for(ms);
-  monitor.CheckAndHandlePeriodicReset();
+    std::this_thread::sleep_for(ms);
+    monitor.CheckAndHandlePeriodicReset();
 }
 
-TEST(CrossroadTrafficMonitoringTest, InitialStateIsInit) {
-  std::cout << "\n[TEST] InitialStateIsInit\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
+//-----------------------------------------------------------------------------
+// Test Suite: State Transitions
+//-----------------------------------------------------------------------------
 
-  // Check state
-  std::cout << "  Expecting state=Init, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Init);
 
-  // Check error count
-  std::cout << "  Expecting errorCount=0, Actual=" << monitor.GetErrorCount()
-            << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 0u);
+TEST(StateTransitions, InitialStateIsInit) {
+    std::cout << "\n[TEST] InitialStateIsInit\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
 
-  // Check stats empty
-  auto stats = monitor.GetStatistics();
-  std::cout << "  Expecting empty stats, Actual size=" << stats.size()
-            << std::endl;
-  EXPECT_TRUE(stats.empty());
+    std::cout << "  Checking initial state...\n";
+    std::cout << "  Expected state: Init (0), Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Init);
+    
+    std::cout << "  Expected error count: 0, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 0u);
+    
+    std::cout << "  Expected empty statistics: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
 }
 
-TEST(CrossroadTrafficMonitoringTest, StartTransitionsInitToActive) {
-  std::cout << "\n[TEST] StartTransitionsInitToActive\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
-  std::cout << "  Initial state (expect Init)="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Init);
 
-  std::cout
-      << "  Signaling Bicycle(\"INIT-BIKE\") in Init => should be ignored\n";
-  monitor.OnSignal(Bicycle("INIT-BIKE"));
+TEST(StateTransitions, StartTransitionsInitToActive) {
+    std::cout << "\n[TEST] StartTransitionsInitToActive\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
+    
+    std::cout << "  Initial state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 0 - Init)\n";
+    ASSERT_EQ(monitor.GetCurrentState(), State::Init);
 
-  auto stats = monitor.GetStatistics();
-  std::cout << "  Expecting no stats, Actual size=" << stats.size()
-            << std::endl;
-  EXPECT_TRUE(stats.empty());
+    std::cout << "  Sending signal in Init state...\n";
+    monitor.OnSignal(Bicycle("INIT-BIKE"));
+    std::cout << "  Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
 
-  std::cout << "  Calling monitor.Start() => expect state=Active\n";
-  monitor.Start();
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Active);
+    std::cout << "  Calling Start()...\n";
+    monitor.Start();
+    std::cout << "  Post-Start state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 1 - Active)\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Active);
 }
 
-TEST(CrossroadTrafficMonitoringTest, StopTransitionsActiveToStopped) {
-  std::cout << "\n[TEST] StopTransitionsActiveToStopped\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(2000));
-  monitor.Start();
-  std::cout << "  After Start(): Expect Active, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Active);
+TEST(StateTransitions, StopTransitionsActiveToStopped) {
+    std::cout << "\n[TEST] StopTransitionsActiveToStopped\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(2000));
+    monitor.Start();
+    
+    std::cout << "  Pre-Stop state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 1 - Active)\n";
+    ASSERT_EQ(monitor.GetCurrentState(), State::Active);
 
-  std::cout << "  Calling monitor.Stop() => expect state=Stopped\n";
-  monitor.Stop();
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Stopped);
+    std::cout << "  Calling Stop()...\n";
+    monitor.Stop();
+    std::cout << "  Post-Stop state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 3 - Stopped)\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Stopped);
 
-  std::cout << "  OnSignal(Car(\"STOPPED-CAR\")) in Stopped => ignored\n";
-  monitor.OnSignal(Car("STOPPED-CAR"));
+    std::cout << "  Testing signal in Stopped state...\n";
+    monitor.OnSignal(Car("STOPPED-CAR"));
+    std::cout << "  Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
 
-  auto stats = monitor.GetStatistics();
-  std::cout << "  Expecting stats empty, Actual size=" << stats.size()
-            << std::endl;
-  EXPECT_TRUE(stats.empty());
-
-  std::cout << "  simulateTimePassing(2500 ms) => should remain Stopped\n";
-  simulateTimePassing(monitor, std::chrono::milliseconds(2500));
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Stopped);
+    std::cout << "  Testing periodic reset in Stopped state...\n";
+    simulateTimePassing(monitor, std::chrono::milliseconds(2500));
+    std::cout << "  Expected state remains Stopped: 3, Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Stopped);
 }
 
-TEST(CrossroadTrafficMonitoringTest, ResetClearsStatsAndForcesActive) {
-  std::cout << "\n[TEST] ResetClearsStatsAndForcesActive\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(2000));
-  monitor.Start();
+//-----------------------------------------------------------------------------
+// Test Suite: Reset Functionality
+//-----------------------------------------------------------------------------
 
-  std::cout << "  Signaling vehicles...\n";
-  monitor.OnSignal(Bicycle("B1"));
-  monitor.OnSignal(Bicycle("B1")); // same ID => increments count
-  monitor.OnSignal(Car("C1"));
+TEST(ResetFunctionality, ManualResetClearsAllData) {
+    std::cout << "\n[TEST] ManualResetClearsAllData\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(2000));
+    monitor.Start();
 
-  std::cout << "  Expect state=Active, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Active);
+    std::cout << "  Adding test vehicles:\n";
+    std::cout << "  - Bicycle B1 (x2)\n  - Car C1\n";
+    monitor.OnSignal(Bicycle("B1"));
+    monitor.OnSignal(Bicycle("B1"));
+    monitor.OnSignal(Car("C1"));
+    
+    std::cout << "  Pre-reset statistics count: " 
+              << monitor.GetStatistics().size() << "\n";
+    ASSERT_FALSE(monitor.GetStatistics().empty());
 
-  auto beforeReset = monitor.GetStatistics();
-  std::cout << "  Stats before Reset, size=" << beforeReset.size()
-            << " (expect >0)\n";
-  EXPECT_FALSE(beforeReset.empty());
-
-  std::cout << "  Calling monitor.Reset() => expect state=Active, empty stats, "
-               "errorCount=0\n";
-  monitor.Reset();
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Active);
-
-  auto afterReset = monitor.GetStatistics();
-  std::cout << "  Stats after Reset, size=" << afterReset.size() << std::endl;
-  EXPECT_TRUE(afterReset.empty());
-
-  std::cout << "  ErrorCount=" << monitor.GetErrorCount() << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 0u);
+    std::cout << "  Performing manual reset...\n";
+    monitor.Reset();
+    
+    std::cout << "  Post-Reset state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 1 - Active)\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Active);
+    
+    std::cout << "  Expected empty statistics: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
+    
+    std::cout << "  Expected error count: 0, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 0u);
 }
 
-TEST(CrossroadTrafficMonitoringTest, EmptySignalCausesErrorStateFromActive) {
-  std::cout << "\n[TEST] EmptySignalCausesErrorStateFromActive\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
-  monitor.Start();
 
-  std::cout << "  Expect initial state=Active, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Active);
 
-  std::cout << "  OnSignal() => empty => transition to Error\n";
-  monitor.OnSignal();
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Error);
+TEST(ResetFunctionality, PeriodicAutoReset) {
+    std::cout << "\n[TEST] PeriodicAutoReset\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
+    monitor.Start();
 
-  std::cout << "  Expect errorCount=1, Actual=" << monitor.GetErrorCount()
-            << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 1u);
+    std::cout << "  Adding test vehicle B1...\n";
+    monitor.OnSignal(Bicycle("B1"));
+    std::cout << "  Pre-reset statistics count: " 
+              << monitor.GetStatistics().size() << "\n";
+    ASSERT_FALSE(monitor.GetStatistics().empty());
 
-  std::cout << "  Another empty OnSignal() => increments errorCount\n";
-  monitor.OnSignal();
-  std::cout << "  errorCount=" << monitor.GetErrorCount() << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 2u);
-
-  std::cout << "  OnSignal(Car(\"E-CAR\")) => still in Error => increments "
-               "errorCount again\n";
-  monitor.OnSignal(Car("E-CAR"));
-  std::cout << "  errorCount=" << monitor.GetErrorCount() << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 3u);
-
-  auto stats = monitor.GetStatistics();
-  std::cout << "  Expect stats empty, Actual size=" << stats.size()
-            << std::endl;
-  EXPECT_TRUE(stats.empty());
-
-  std::cout << "  simulateTimePassing(1500 ms) => triggers periodic reset => "
-               "back to Active, error=0\n";
-  simulateTimePassing(monitor, std::chrono::milliseconds(1500));
-  std::cout << "  Actual state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Active);
-  std::cout << "  ErrorCount=" << monitor.GetErrorCount() << std::endl;
-  EXPECT_EQ(monitor.GetErrorCount(), 0u);
-
-  stats = monitor.GetStatistics();
-  std::cout << "  Expect stats empty after reset, size=" << stats.size()
-            << std::endl;
-  EXPECT_TRUE(stats.empty());
+    std::cout << "  Simulating 1200ms delay...\n";
+    simulateTimePassing(monitor, std::chrono::milliseconds(1200));
+    
+    std::cout << "  Post-reset statistics count: " 
+              << monitor.GetStatistics().size() 
+              << " (Expected: 0)\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
+    
+    std::cout << "  Expected state: Active (1), Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Active);
 }
 
-TEST(CrossroadTrafficMonitoringTest, SignalsInInitOrStoppedAreIgnored) {
-  std::cout << "\n[TEST] SignalsInInitOrStoppedAreIgnored\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
-  std::cout << "  Expect state=Init, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Init);
 
-  std::cout << "  OnSignal(Scooter(\"NOOP\")) in Init => ignored\n";
-  monitor.OnSignal(Scooter("NOOP"));
-  auto stats = monitor.GetStatistics();
-  std::cout << "  Expect stats empty, size=" << stats.size() << std::endl;
-  EXPECT_TRUE(stats.empty());
+TEST(ResetFunctionality, PeriodicResetTransitionsErrorToActive) {
+    std::cout << "\n[TEST] PeriodicResetTransitionsErrorToActive\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(100));
+    monitor.Start();
 
-  std::cout << "  Start() => becomes Active, then Stop() => becomes Stopped\n";
-  monitor.Start();
-  monitor.Stop();
-  std::cout << "  Expect state=Stopped, Actual="
-            << static_cast<int>(monitor.GetCurrentState()) << std::endl;
-  ASSERT_EQ(monitor.GetCurrentState(), State::Stopped);
+    std::cout << "  Initial state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 1 - Active)\n";
+    ASSERT_EQ(monitor.GetCurrentState(), State::Active);
 
-  std::cout << "  OnSignal(Scooter(\"NOOP2\")) => ignored in Stopped\n";
-  monitor.OnSignal(Scooter("NOOP2"));
-  stats = monitor.GetStatistics();
-  std::cout << "  Expect stats empty, size=" << stats.size() << std::endl;
-  EXPECT_TRUE(stats.empty());
+    std::cout << "  Triggering error with empty signal...\n";
+    monitor.OnSignal();
+    std::cout << "  Post-error state: " 
+              << static_cast<int>(monitor.GetCurrentState()) 
+              << " (Expected: 2 - Error)\n";
+    ASSERT_EQ(monitor.GetCurrentState(), State::Error);
+
+    std::cout << "  Simulating 150ms delay (period=100ms)...\n";
+    simulateTimePassing(monitor, std::chrono::milliseconds(150));
+    
+    std::cout << "  Post-reset checks:\n";
+    std::cout << "  - Expected state: Active (1), Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Active);
+    
+    std::cout << "  - Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
+    
+    std::cout << "  - Expected error count reset: 0, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 0u);
 }
 
-TEST(CrossroadTrafficMonitoringTest, VehicleCountingWorks) {
-  std::cout << "\n[TEST] VehicleCountingWorks\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(5000));
-  monitor.Start();
-  std::cout
-      << "  Adding signals: Bicycle(ABC-011), Car(ABC-012), Scooter(ABC-014)\n";
-  monitor.OnSignal(Bicycle("ABC-011"));
-  monitor.OnSignal(Car("ABC-012"));
-  monitor.OnSignal(Scooter("ABC-014"));
+//-----------------------------------------------------------------------------
+// Test Suite: Error Handling
+//-----------------------------------------------------------------------------
 
-  std::cout << "  Re-signaling Car(ABC-012), plus Bicycle(ZZZ-999), "
-               "Bicycle(ABC-011)\n";
-  monitor.OnSignal(Car("ABC-012")); // same car => increment count to 2
-  monitor.OnSignal(Bicycle("ZZZ-999"));
-  monitor.OnSignal(Bicycle("ABC-011")); // increment Bicycle ABC-011 => 2
+TEST(ErrorHandling, EmptySignalsTriggerErrorState) {
+    std::cout << "\n[TEST] EmptySignalsTriggerErrorState\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
+    monitor.Start();
 
-  auto allStats = monitor.GetStatistics();
-  std::cout << "  Expect 4 total entries, Actual size=" << allStats.size()
-            << std::endl;
-  ASSERT_EQ(allStats.size(), 4u);
+    std::cout << "  Sending empty signal...\n";
+    monitor.OnSignal();
+    std::cout << "  Expected state: Error (2), Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Error);
+    
+    std::cout << "  Expected error count: 1, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 1u);
 
-  std::cout << "  Expect alphabetical: ABC-011 (Bicycle(2)), ABC-012 (Car(2)), "
-               "ABC-014 (Scooter(1)), ZZZ-999 (Bicycle(1))\n";
-  for (const auto &line : allStats)
-    std::cout << "    " << line << std::endl;
+    std::cout << "  Sending subsequent signals in Error state:\n";
+    std::cout << "  - Empty signal\n  - Car E-CAR\n";
+    monitor.OnSignal();
+    monitor.OnSignal(Car("E-CAR"));
+    
+    std::cout << "  Expected error count: 3, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 3u);
+    
+    std::cout << "  Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
 
-  // check the order
-  EXPECT_EQ(allStats[0], "ABC-011 - Bicycle (2)");
-  EXPECT_EQ(allStats[1], "ABC-012 - Car (2)");
-  EXPECT_EQ(allStats[2], "ABC-014 - Scooter (1)");
-  EXPECT_EQ(allStats[3], "ZZZ-999 - Bicycle (1)");
-
-  // Check category-specific
-  auto bicycleStats = monitor.GetStatistics(VehicleCategory::Bicycle);
-  std::cout << "  Bicycle stats size=" << bicycleStats.size() << std::endl;
-  EXPECT_EQ(bicycleStats.size(), 2u);
-
-  auto carStats = monitor.GetStatistics(VehicleCategory::Car);
-  std::cout << "  Car stats size=" << carStats.size() << std::endl;
-  EXPECT_EQ(carStats.size(), 1u);
-  EXPECT_EQ(carStats[0], "ABC-012 - Car (2)");
-
-  auto scooterStats = monitor.GetStatistics(VehicleCategory::Scooter);
-  std::cout << "  Scooter stats size=" << scooterStats.size() << std::endl;
-  EXPECT_EQ(scooterStats.size(), 1u);
-  EXPECT_EQ(scooterStats[0], "ABC-014 - Scooter (1)");
+    std::cout << "  Simulating 1500ms delay for periodic reset...\n";
+    simulateTimePassing(monitor, std::chrono::milliseconds(1500));
+    
+    std::cout << "  Post-reset state: Active (1), Actual: " 
+              << static_cast<int>(monitor.GetCurrentState()) << "\n";
+    EXPECT_EQ(monitor.GetCurrentState(), State::Active);
+    
+    std::cout << "  Expected error count reset: 0, Actual: " 
+              << monitor.GetErrorCount() << "\n";
+    EXPECT_EQ(monitor.GetErrorCount(), 0u);
 }
 
-TEST(CrossroadTrafficMonitoringTest, TestPeriodicResetManualCheck) {
-  std::cout << "\n[TEST] TestPeriodicResetManualCheck\n";
-  CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
-  monitor.Start();
 
-  std::cout << "  Signaling Bicycle(\"B1\") => expect stats not empty\n";
-  monitor.OnSignal(Bicycle("B1"));
-  auto stats = monitor.GetStatistics();
-  std::cout << "  stats size=" << stats.size() << std::endl;
-  ASSERT_FALSE(stats.empty());
+//-----------------------------------------------------------------------------
+// Test Suite: Data Validation
+//-----------------------------------------------------------------------------
 
-  std::cout << "  simulateTimePassing(1200 ms) => auto-reset triggered => "
-               "expect empty stats, Active state\n";
-  simulateTimePassing(monitor, std::chrono::milliseconds(1200));
-  stats = monitor.GetStatistics();
-  std::cout << "  stats size=" << stats.size() << std::endl;
-  EXPECT_TRUE(stats.empty());
-  std::cout << "  state=" << static_cast<int>(monitor.GetCurrentState())
-            << std::endl;
-  EXPECT_EQ(monitor.GetCurrentState(), State::Active);
+TEST(DataValidation, VehicleCountingAndOrder) {
+    std::cout << "\n[TEST] VehicleCountingAndOrder\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(5000));
+    monitor.Start();
+
+    std::cout << "  Adding vehicles:\n";
+    std::cout << "  - Bicycle ABC-011 (x2)\n";
+    std::cout << "  - Car ABC-012 (x2)\n";
+    std::cout << "  - Scooter ABC-014\n";
+    std::cout << "  - Bicycle ZZZ-999\n";
+    
+    monitor.OnSignal(Bicycle("ABC-011"));
+    monitor.OnSignal(Car("ABC-012"));
+    monitor.OnSignal(Scooter("ABC-014"));
+    monitor.OnSignal(Car("ABC-012"));
+    monitor.OnSignal(Bicycle("ZZZ-999"));
+    monitor.OnSignal(Bicycle("ABC-011"));
+
+    const auto stats = monitor.GetStatistics();
+    std::cout << "  Total entries: " << stats.size() << " (Expected: 4)\n";
+    ASSERT_EQ(stats.size(), 4u);
+
+    std::cout << "  Verifying order and counts:\n";
+    std::cout << "  [0] Expected: ABC-011 - Bicycle (2), Actual: " << stats[0] << "\n";
+    EXPECT_EQ(stats[0], "ABC-011 - Bicycle (2)");
+    
+    std::cout << "  [1] Expected: ABC-012 - Car (2), Actual: " << stats[1] << "\n";
+    EXPECT_EQ(stats[1], "ABC-012 - Car (2)");
+    
+    std::cout << "  [2] Expected: ABC-014 - Scooter (1), Actual: " << stats[2] << "\n";
+    EXPECT_EQ(stats[2], "ABC-014 - Scooter (1)");
+    
+    std::cout << "  [3] Expected: ZZZ-999 - Bicycle (1), Actual: " << stats[3] << "\n";
+    EXPECT_EQ(stats[3], "ZZZ-999 - Bicycle (1)");
+
+    std::cout << "  Verifying category-specific counts:\n";
+    std::cout << "  Bicycles: " << monitor.GetStatistics(VehicleCategory::Bicycle).size() 
+              << " (Expected: 2)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Bicycle).size(), 2u);
+    
+    std::cout << "  Cars: " << monitor.GetStatistics(VehicleCategory::Car).size() 
+              << " (Expected: 1)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Car).size(), 1u);
+    
+    std::cout << "  Scooters: " << monitor.GetStatistics(VehicleCategory::Scooter).size() 
+              << " (Expected: 1)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Scooter).size(), 1u);
 }
 
-TEST(CrossroadTrafficMonitoringTest, TestMaxVehiclesCapacity) {
+TEST(DataValidation, SignalHandlingInInvalidStates) {
+    std::cout << "\n[TEST] SignalHandlingInInvalidStates\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(1000));
+    
+    std::cout << "  Testing Init state...\n";
+    monitor.OnSignal(Scooter("NOOP"));
+    std::cout << "  Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
+
+    std::cout << "  Starting and stopping monitor...\n";
+    monitor.Start();
+    monitor.Stop();
+    
+    std::cout << "  Testing Stopped state...\n";
+    monitor.OnSignal(Scooter("NOOP2"));
+    std::cout << "  Expected statistics empty: true, Actual: " 
+              << std::boolalpha << monitor.GetStatistics().empty() << "\n";
+    EXPECT_TRUE(monitor.GetStatistics().empty());
+}
+
+TEST(DataValidation, SameIdDifferentCategories) {
+    std::cout << "\n[TEST] SameIdDifferentCategories\n";
+    CrossroadTrafficMonitoring monitor(std::chrono::hours(24));
+    monitor.Start();
+
+    std::cout << "  Adding vehicles with same ID across categories:\n";
+    std::cout << "  - Bicycle ID-123\n";
+    monitor.OnSignal(Bicycle("ID-123"));
+    std::cout << "  - Car ID-123\n";
+    monitor.OnSignal(Car("ID-123"));
+    std::cout << "  - Scooter ID-123\n";
+    monitor.OnSignal(Scooter("ID-123"));
+
+    const auto allStats = monitor.GetStatistics();
+    std::cout << "  Total unique entries: " << allStats.size() 
+              << " (Expected: 3)\n";
+    ASSERT_EQ(allStats.size(), 3u);
+
+    std::cout << "  Verifying alphabetical order and counts:\n";
+    std::cout << "  [0] Expected: ID-123 - Bicycle (1), Actual: " 
+              << allStats[0] << "\n";
+    EXPECT_EQ(allStats[0], "ID-123 - Bicycle (1)");
+    
+    std::cout << "  [1] Expected: ID-123 - Car (1), Actual: " 
+              << allStats[1] << "\n";
+    EXPECT_EQ(allStats[1], "ID-123 - Car (1)");
+    
+    std::cout << "  [2] Expected: ID-123 - Scooter (1), Actual: " 
+              << allStats[2] << "\n";
+    EXPECT_EQ(allStats[2], "ID-123 - Scooter (1)");
+
+    std::cout << "  Verifying category separation:\n";
+    std::cout << "  Bicycle list size: " 
+              << monitor.GetStatistics(VehicleCategory::Bicycle).size() 
+              << " (Expected: 1)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Bicycle).size(), 1u);
+    
+    std::cout << "  Car list size: " 
+              << monitor.GetStatistics(VehicleCategory::Car).size() 
+              << " (Expected: 1)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Car).size(), 1u);
+    
+    std::cout << "  Scooter list size: " 
+              << monitor.GetStatistics(VehicleCategory::Scooter).size() 
+              << " (Expected: 1)\n";
+    EXPECT_EQ(monitor.GetStatistics(VehicleCategory::Scooter).size(), 1u);
+}
+
+TEST(DataValidation, TestMaxVehiclesCapacity) {
   std::cout << "\n[TEST] TestMaxVehiclesCapacity\n";
   CrossroadTrafficMonitoring monitor(std::chrono::milliseconds(999999));
   monitor.Start();

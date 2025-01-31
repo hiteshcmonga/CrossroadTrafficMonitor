@@ -166,3 +166,4 @@ std::lock_guard<std::mutex> lock(monitorMutex);
 2. Configuration File: Instead of hardcoding or passing the period in code, reading from config file (JSON/YAML) or env variable.
 3. Responsive and better interactive menu: The interactive menu accepts exact case-sensitive input. It does not handle invalid inputs gracefully.
 4. Database integration: right now system does not store historical data- everything resets when program restarts and statistics are lost after each session.
+5. Enhance coverage: The repository has less test coverage (only checking critical functions), test coverage can be improved.
