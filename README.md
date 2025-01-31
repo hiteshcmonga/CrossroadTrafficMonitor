@@ -42,8 +42,15 @@ Aim to create a system that:
 ## Design and Architecture
 
 ### Design
+The application is designed to take in account  efficiency and reliability. The system operates as a state machine with four states: Init, Active, Error, and Stopped. This structure ensures control over signals—only the Active state processes vehicle signals, while Init and Stopped ignore inputs, and Error captures invalid operations.  Transitions between states are triggered by actions (e.g., Start(), Stop(), Reset()) or periodic timeouts.
 
-### Memory management
+To manage vehicle tracking without dynamic memory allocation, the system uses a pre-allocated pool of 1,000 Vehicle objects. Intrusive linked list, ensures O(1) allocation and deallocation. Vehicles are tracked using two Boost intrusive lists: category-specific lists (Bicycle, Car, Scooter) for fast per-type lookups and a global alphabetical list for ordered reporting. While alphabetical insertion uses linear search (O(n)), this trade-off was chosen for simplicity, given the 1,000-item limit.
+
+Concurrency is managed through a mutex-guarded design, where all public methods are thread-safe via std::lock_guard. Alphabetical order is maintained during insertion, avoiding costly sorting at query time.
+
+
+### State diagram
+![State diagram](screenshots/State_machine.png)
 
 ## Project Structure
 
