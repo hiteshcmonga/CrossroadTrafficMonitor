@@ -154,8 +154,7 @@ private:
   using CategoryMemberOption =
       boost::intrusive::member_hook<Vehicle, Vehicle::Hook,
                                     &Vehicle::category_hook>;
-
-  // **Disable constant_time_size** because auto_unlink is being used.
+                                    
   using CategoryList =
       boost::intrusive::list<Vehicle, CategoryMemberOption,
                              boost::intrusive::constant_time_size<false>>;

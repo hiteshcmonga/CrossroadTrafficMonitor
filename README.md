@@ -18,7 +18,7 @@ A C++20 application designed to monitor vehicle traffic at a crossroad, optimizi
 Aim to create a system that:
 1. Handles up to 1000 unique vehicles across 3 categories (Bicycle, Car, Scooter).
 2. Handle state transitions between Init, Active, Error and Stop states.
-3. Register vehicle by ID, maintain a count of appearances and auto-reset after configurable period.
+3. Register vehicle by ID, maintain a count of appearances, errors, and auto-resets after configurable period.
 4. Provide alphabetical and per-category statistics.
 5. Optimize for runtime efficiency and avoid memory fragmentation. 
 
@@ -42,7 +42,7 @@ Aim to create a system that:
 ## Design and Architecture
 
 ### Design
-The application is designed to take in account  efficiency and reliability. The system operates as a state machine with four states: Init, Active, Error, and Stopped. This structure ensures control over signals—only the Active state processes vehicle signals, while Init and Stopped ignore inputs, and Error captures invalid operations.  Transitions between states are triggered by actions (e.g., Start(), Stop(), Reset()) or periodic timeouts.
+The application is designed to take in account efficiency and reliability. The system operates as a state machine with four states: Init, Active, Error, and Stopped. This structure ensures control over signals—only the Active state processes vehicle signals, while Init and Stopped ignore inputs, and Error captures invalid operations.  Transitions between states are triggered by actions (e.g., Start(), Stop(), Reset()) or periodic timeouts.
 
 To manage vehicle tracking without dynamic memory allocation, the system uses a pre-allocated pool of 1,000 Vehicle objects. Intrusive linked list, ensures O(1) allocation and deallocation. Vehicles are tracked using two Boost intrusive lists: category-specific lists (Bicycle, Car, Scooter) for fast per-type lookups and a global alphabetical list for ordered reporting. While alphabetical insertion uses linear search (O(n)), this trade-off was chosen for simplicity, given the 1,000-item limit.
 
@@ -83,7 +83,7 @@ Ensure g++ is installed with:
 ```cpp
 g++ --version
 ```
-- Msys: If missing, install MinGW-w64 or MSYS2 (optinal)
+- Msys: If missing, install MinGW-w64 or MSYS2 (optional)
 - Boost Library: Install Boost library from the [official site](https://www.boost.org/). Extract it and note the directory path.
 
 ### Building the project - Manual compilation
@@ -119,14 +119,12 @@ If the user doesn’t want to worry about installing local dependencies, use Doc
 A Dockerfile is included in the repository. Build and run the application inside a container without installing Boost, CMake, or dependencies manually.
 
 ```cpp
-Copy
-Edit
 docker build -t traffic_monitoring_system .
 docker run --rm -it traffic_monitoring_system
 ```
 
 ## Testing Strategy
-Google tes is used. Test cases include tests for:
+Google test is used for unit tests. Test cases include tests for:
 - Initial State: Confirm system starts in Init.
 - Start/Stop/Reset transitions.
 - Empty Signal => transitions to Error.
@@ -139,7 +137,7 @@ Google tes is used. Test cases include tests for:
 ## CI/CD Pipeline
 1. Build & Test: Installs dependencies and compiles; builds with coverage flags.
 2. Memory Checks: Valgrind for leak detection and memory fragmentation check (using massif)
-3. Coverage Reporting (Not stable)
+3. Coverage Reporting (Not Comprehensive but checks most critical tests)
 
 ## Demo and screenshots
 A quick demo of the application running on Docker:
@@ -148,29 +146,38 @@ A quick demo of the application running on Docker:
 ## Challenges and solutions
 
 In developing the Crossroad Traffic Monitoring System, several challenges arose. Below are some of the key challenges faced during the implementation and how they were resolved:
+
 1. Segmentation Fault During execution:
 While running a test executable, a segmentation fault occurred, indicating an issue related to invalid memory access.
+
 ![Segmentation fault screenshot](screenshots/seg_bug.png)
+
 The root cause was accessing a dangling pointer after an element was removed from the intrusive list.
 gdb was helpful in finding out the issue and resolving it: 
+
 ![Segmentation fault fix](screenshots/seg_fix.png)
 
 2. Free List Mismanagement
+
 Another issue was that concurrent FreeVehicle() and AllocateVehicle() calls corrupted the free list’s linked structure. Issue identified was that without explicitly terminating the last node with `nullptr`, the free list became corrupted and was resolved with:
+
 ```cpp
 vehiclePool[MAX_VEHICLES - 1].nextFree = nullptr;
 ```
 
 3. Thread safety issues
+
 Simultaneous access to vehicle data caused race conditions. The issue was found out with unit test
 showing incorrect statistics upon using multiple onSignal(). Introduction of mutex locks for safe multithreading resolved the issue:
+
 ```cpp
 std::lock_guard<std::mutex> lock(monitorMutex);
 ```
 
 ## Future Improvements
+
 1. Faster lookups: Instead of linear search in category lists. we could use Boost.Instrusive Set for faster lookup. For 1000 vehicles linear search worked well (keeping in mind the overall code complexity).
 2. Configuration File: Instead of hardcoding or passing the period in code, reading from config file (JSON/YAML) or env variable.
-3. Responsive and better interactive menu: The interactive menu accepts exact case-sensitive input. It does not handle invalid inputs gracefully.
+3. Responsive and better interactive menu: The interactive menu accepts exact case-sensitive input. It does not handle inputs optimally.
 4. Database integration: right now system does not store historical data- everything resets when program restarts and statistics are lost after each session.
 5. Enhance coverage: The repository has less test coverage (only checking critical functions), test coverage can be improved.

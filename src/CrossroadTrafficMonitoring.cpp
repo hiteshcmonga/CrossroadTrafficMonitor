@@ -28,8 +28,6 @@ void CrossroadTrafficMonitoring::InitializeFreeList() {
     vehiclePool[i].alphabetical_hook.unlink();
     // link i-th to (i+1)-th
     vehiclePool[i].nextFree = &vehiclePool[i + 1];
-    // 'count' field is also used as a next pointer storage to avoid extra space
-    // usage.
   }
   // Mark the tail
   vehiclePool[MAX_VEHICLES - 1].category_hook.unlink();
@@ -37,7 +35,7 @@ void CrossroadTrafficMonitoring::InitializeFreeList() {
   vehiclePool[MAX_VEHICLES - 1].nextFree = nullptr;
 }
 
-// AllocateVehicle: pop from free list
+// AllocateVehicle: push from free list
 Vehicle *CrossroadTrafficMonitoring::AllocateVehicle() {
   if (!freeListHead) {
     return nullptr; // no more space
@@ -50,7 +48,7 @@ Vehicle *CrossroadTrafficMonitoring::AllocateVehicle() {
   return v;
 }
 
-// Free vehicle: push to free list
+// Free vehicle: pop from free list
 void CrossroadTrafficMonitoring::FreeVehicle(Vehicle *v) {
   // unlink from any intrusive lists if it's linked
   if (v->category_hook.is_linked())
@@ -125,7 +123,7 @@ void CrossroadTrafficMonitoring::scheduleNextReset() {
 }
 
 void CrossroadTrafficMonitoring::CheckAndHandlePeriodicReset() {
-  // If we're in Stopped state, do NOT reset.
+  // If we're in Stopped state, do not reset.
   if (state == State::Stopped)
     return;
 
@@ -145,7 +143,6 @@ void CrossroadTrafficMonitoring::Start() {
     state = State::Active;
     scheduleNextReset();
   }
-  // Otherwise do nothing
 }
 
 void CrossroadTrafficMonitoring::Stop() {
@@ -154,7 +151,6 @@ void CrossroadTrafficMonitoring::Stop() {
   if (state == State::Active) {
     state = State::Stopped;
   }
-  // Otherwise do nothing
 }
 
 void CrossroadTrafficMonitoring::Reset() {
@@ -243,8 +239,7 @@ void CrossroadTrafficMonitoring_OnSignal_Helper(
   // if in Error => increment errorCount, log, do not count the vehicle
   if (self->GetCurrentState() == State::Error) {
     ++(self->errorCount);
-    std::cerr << "[CameraError] Vehicle signal received in Error state. Not "
-                 "counted.\n";
+    std::cerr << "Vehicle signal received in Error state. Not counted.\n";
     return;
   }
 
