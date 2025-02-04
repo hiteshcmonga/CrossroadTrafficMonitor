@@ -50,7 +50,7 @@ Concurrency is managed through a mutex-guarded design, where all public methods 
 
 
 ### State diagram
-![State diagram](screenshots/State_machine.png)
+![State diagram](screenshots/State_diagram.png)
 
 ## Project Structure
 
