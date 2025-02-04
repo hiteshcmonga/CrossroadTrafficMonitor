@@ -171,8 +171,6 @@ int main() {
       if (beforeSignal == State::Init || beforeSignal == State::Stopped) {
         std::cout << "Error signal ignored (system not Active).\n";
       } else if (beforeSignal == State::Active && afterSignal == State::Error) {
-        // Possibly increments error count if your code does that for first
-        // empty signal
         std::cout << "Error signaled: system now in Error state.\n";
       } else if (beforeSignal == State::Error && afterSignal == State::Error) {
         std::cout << "Error signaled again while already in Error state.\n";
